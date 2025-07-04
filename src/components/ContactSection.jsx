@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef } from "react";
 import {
   Github,
   Linkedin,
@@ -7,22 +7,36 @@ import {
   Send,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useForm, ValidationError } from "@formspree/react";
+import emailjs from "@emailjs/browser";
 
 export const ContactSection = () => {
-  const [state, handleSubmit] = useForm("xnnvrnkr");
-  const [showPopup, setShowPopup] = useState(false);
   const formRef = useRef(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [showPopup, setShowPopup] = useState(false);
 
-  useEffect(() => {
-    if (state.succeeded) {
-      setShowPopup(true);
-      // Clear form inputs
-      if (formRef.current) {
+  const sendEmail = (e) => {
+    e.preventDefault();
+    setSubmitting(true);
+
+    emailjs.sendForm(
+      "service_hpc9jn8",    // Your EmailJS service ID
+      "template_4cdfmin",   // Your EmailJS template ID
+      formRef.current,
+      "hSuejZfutQakuoPgV"   // Your EmailJS public key
+    ).then(
+      (result) => {
+        console.log("Email sent successfully:", result.text);
+        setShowPopup(true);
         formRef.current.reset();
+        setSubmitting(false);
+      },
+      (error) => {
+        console.error("Email failed to send:", error.text);
+        alert("Failed to send message. Please try again later.");
+        setSubmitting(false);
       }
-    }
-  }, [state.succeeded]);
+    );
+  };
 
   return (
     <section id="contact" className="py-24 px-4 relative bg-secondary/30">
@@ -95,52 +109,38 @@ export const ContactSection = () => {
           <div className="bg-card p-8 rounded-lg shadow-xs">
             <h3 className="text-2xl font-semibold mb-6">Send a Message</h3>
 
-            <form
-              ref={formRef}
-              className="space-y-6"
-              onSubmit={handleSubmit}
-            >
+            <form ref={formRef} className="space-y-6" onSubmit={sendEmail}>
               <div>
                 <label
-                  htmlFor="name"
+                  htmlFor="from_name"
                   className="block text-sm font-medium mb-2"
                 >
                   Your Name
                 </label>
                 <input
                   type="text"
-                  id="name"
-                  name="name"
+                  id="from_name"
+                  name="from_name"
                   required
                   className="w-full px-4 py-3 rounded-md border border-input bg-background focus:outline-hidden focus:ring-2 focus:ring-primary"
                   placeholder="YOUR NAME"
-                />
-                <ValidationError
-                  prefix="Name"
-                  field="name"
-                  errors={state.errors}
                 />
               </div>
 
               <div>
                 <label
-                  htmlFor="email"
+                  htmlFor="reply_to"
                   className="block text-sm font-medium mb-2"
                 >
                   Your Email
                 </label>
                 <input
                   type="email"
-                  id="email"
-                  name="email"
+                  id="reply_to"
+                  name="reply_to"
                   required
                   className="w-full px-4 py-3 rounded-md border border-input bg-background focus:outline-hidden focus:ring-2 focus:ring-primary"
                   placeholder="YOUR EMAIL"
-                />
-                <ValidationError
-                  prefix="Email"
-                  field="email"
-                  errors={state.errors}
                 />
               </div>
 
@@ -158,21 +158,16 @@ export const ContactSection = () => {
                   className="w-full px-4 py-3 rounded-md border border-input bg-background focus:outline-hidden focus:ring-2 focus:ring-primary resize-none"
                   placeholder="YOUR MESSAGE"
                 />
-                <ValidationError
-                  prefix="Message"
-                  field="message"
-                  errors={state.errors}
-                />
               </div>
 
               <button
                 type="submit"
-                disabled={state.submitting}
+                disabled={submitting}
                 className={cn(
                   "cosmic-button w-full flex items-center justify-center gap-2"
                 )}
               >
-                {state.submitting ? "Sending..." : "Send Message"}
+                {submitting ? "Sending..." : "Send Message"}
                 <Send size={16} />
               </button>
             </form>
